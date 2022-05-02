@@ -811,6 +811,8 @@ namespace Windows.UI.Xaml.Controls
                 // Go to the default state ("Normal" visual state):
                 UpdateVisualStates();
 
+                ChangeValidationVisualState();
+
                 bool hasMouseOverState = false;
                 bool hasPressedState = false;
                 bool hasFocusedState = false;
@@ -991,6 +993,18 @@ void Control_PointerReleased(object sender, Input.PointerRoutedEventArgs e)
                 {
                     VisualStateManager.GoToState(this, "Unfocused", true);
                 }
+            }
+        }
+
+        internal void ChangeValidationVisualState()
+        {
+            if (Validation.GetHasError(this))
+            {
+                VisualStateManager.GoToState(this, _isFocused ? "InvalidFocused" : "InvalidUnfocused", true);
+            }
+            else
+            {
+                VisualStateManager.GoToState(this, "Valid", true);
             }
         }
 
@@ -1178,5 +1192,13 @@ void Control_PointerReleased(object sender, Input.PointerRoutedEventArgs e)
             return new Size(0.0, 0.0);
         }
 
+        internal static void OnVisualStatePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (!(d is Control control))
+                return;
+
+            // It should call ChangeVisualStates() and handle validation visual state there but seem like mixup with keyboard visual state
+            control.ChangeValidationVisualState();
+        }
     }
 }

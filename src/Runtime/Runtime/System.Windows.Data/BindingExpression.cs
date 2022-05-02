@@ -13,6 +13,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Collections;
 using CSHTML5.Internal;
 using OpenSilver.Internal.Data;
 
@@ -135,7 +137,14 @@ namespace Windows.UI.Xaml.Data
                 }
                 else
                 {
-                    value = UseFallbackValue();
+                    if (this.ParentBinding.Path.Path.Equals("(Validation.Errors)[0].ErrorContent", StringComparison.OrdinalIgnoreCase) && this._bindingSource is FrameworkElement sourceFE)
+                    {
+                        value = Validation.GetErrors(sourceFE)?.FirstOrDefault()?.ErrorContent;
+                    }
+                    else
+                    {
+                        value = UseFallbackValue();
+                    }
                 }
             }
             else
@@ -472,7 +481,22 @@ namespace Windows.UI.Xaml.Data
                 }
 
                 node.SetValue(convertedValue);
-                Validation.ClearInvalid(this);
+
+                if (ParentBinding.ValidatesOnDataErrors && node is StandardPropertyPathNode standardNode)
+                {
+                    if (TryGetDataErrorInfoMessage(standardNode.Source, out var error))
+                    {
+                        Validation.MarkInvalid(this, new ValidationError(this) { ErrorContent = error });
+                    }
+                    else
+                    {
+                        Validation.ClearInvalid(this);
+                    }
+                }
+                else
+                {
+                    Validation.ClearInvalid(this);
+                }
             }
             catch (Exception e)
             {
@@ -503,6 +527,20 @@ namespace Windows.UI.Xaml.Data
                 _needsUpdate = false;
                 UpdateSourceObject(Target.GetValue(TargetProperty));
             }
+        }
+        
+        private bool TryGetDataErrorInfoMessage(object source, out string error)
+        {
+            error = null;
+
+            if (source is ComponentModel.IDataErrorInfo dataErrorInfo)
+            {
+                // TODO: Need get property from final node instead
+                var prop = ParentBinding.Path.Path.Split('.').LastOrDefault();
+                error = dataErrorInfo[prop];
+            }
+
+            return !string.IsNullOrEmpty(error);
         }
 
         /// <summary>
@@ -874,6 +912,18 @@ namespace Windows.UI.Xaml.Data
                 Target.ApplyExpression(TargetProperty, this, ParentBinding._isInStyle);
 
                 IsUpdating = oldIsUpdating;
+
+                if (ParentBinding.ValidatesOnDataErrors && _bindingSource is FrameworkElement sourceFE)
+                {
+                    if (TryGetDataErrorInfoMessage(sourceFE.DataContext, out var error))
+                    {
+                        Validation.MarkInvalid(this, new ValidationError(this) { ErrorContent = error });
+                    }
+                    else
+                    {
+                        Validation.ClearInvalid(this);
+                    }
+                }
             }
         }
     }
