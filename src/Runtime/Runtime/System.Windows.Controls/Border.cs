@@ -241,8 +241,8 @@ namespace Windows.UI.Xaml.Controls
                     GetCSSEquivalents = (instance) =>
                     {
                         var cssList = new List<CSSEquivalent>();
-                        var brush = ((Border)instance).BorderBrush;
-                        if (brush is LinearGradientBrush)
+                        var border = (Border)instance;
+                        if (border.BorderBrush is LinearGradientBrush && border.CornerRadius == default)
                         {
                             cssList.Add(new CSSEquivalent
                             {
