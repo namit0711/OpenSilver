@@ -180,11 +180,10 @@ namespace Windows.UI.Xaml.Automation.Peers
 			return null;
 		}
 
-        [OpenSilver.NotImplemented]
-		public bool IsEnabled()
-		{
-			return false;
-		}
+        public bool IsEnabled()
+        {
+            return IsEnabledCore();
+        }
 
         [OpenSilver.NotImplemented]
 		public string GetName()

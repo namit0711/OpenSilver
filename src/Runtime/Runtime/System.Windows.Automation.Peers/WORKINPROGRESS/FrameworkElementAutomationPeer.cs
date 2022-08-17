@@ -18,6 +18,7 @@ namespace Windows.UI.Xaml.Automation.Peers
         [OpenSilver.NotImplemented]
 		public FrameworkElementAutomationPeer(FrameworkElement owner)
 		{
+            this.Owner = owner != null ? (UIElement)owner : throw new ArgumentNullException(nameof(owner));
 		}
 
         [OpenSilver.NotImplemented]
@@ -159,11 +160,11 @@ namespace Windows.UI.Xaml.Automation.Peers
 			return false;
 		}
 
-        [OpenSilver.NotImplemented]
-		protected override bool IsEnabledCore()
-		{
-			return false;
-		}
+        protected override bool IsEnabledCore()
+        {
+            var fe = Owner as FrameworkElement;
+            return fe?.IsEnabled ?? false;
+        }
 
         [OpenSilver.NotImplemented]
 		protected override bool IsOffscreenCore()
