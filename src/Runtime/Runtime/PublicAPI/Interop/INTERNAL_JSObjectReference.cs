@@ -21,6 +21,7 @@ using JSIL.Meta;
 #endif
 
 using System;
+using CSHTML5.Internal;
 
 #if OPENSILVER
 using System.Text.Json;
@@ -74,6 +75,11 @@ namespace CSHTML5.Types
             ReferenceId = referenceId;
             IsArray = true;
             ArrayIndex = arrayIndex;
+        }
+
+        ~INTERNAL_JSObjectReference()
+        {
+            INTERNAL_HtmlDomManager.ExecuteJavaScript($"delete document.jsObjRef['{ReferenceId}']");
         }
 
 #if BRIDGE
