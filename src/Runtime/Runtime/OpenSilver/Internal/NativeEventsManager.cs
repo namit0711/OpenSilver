@@ -59,7 +59,7 @@ namespace OpenSilver.Internal
 
         public void DetachEvents()
         {
-            Interop.ExecuteJavaScriptAsync("document._removeEventListeners($0)", _owner.INTERNAL_OuterDomElement);
+            Interop.ExecuteJavaScriptAsync("document._removeEventListeners($0);_handler=null;MouseTarget=null;KeyboardTarget=null;_owner=null;", _owner.INTERNAL_OuterDomElement);
         }
 
         private void NativeEventCallback(object jsEventArg)

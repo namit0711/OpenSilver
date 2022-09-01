@@ -54,13 +54,13 @@ namespace CSHTML5.Internal // IMPORTANT: if you change this namespace, make sure
 #if !BRIDGE
         [JSIgnore]
 #endif
-        internal static Dictionary<string, UIElement> INTERNAL_idsToUIElements;
+        internal static Dictionary<string, WeakReference<UIElement>> INTERNAL_idsToUIElements;
 
         static INTERNAL_HtmlDomManager()
         {
             if (!IsRunningInJavaScript())
             {
-                INTERNAL_idsToUIElements = new Dictionary<string, UIElement>();
+                INTERNAL_idsToUIElements = new Dictionary<string, WeakReference<UIElement>>();
             }
         }
 
@@ -929,7 +929,7 @@ function(){
                 Interop.ExecuteJavaScriptAsync(@"document.createElementSafe($0, $1, $2, $3)", domElementTag, uniqueIdentifier, parentRef, index);
             }
             
-            INTERNAL_idsToUIElements.Add(uniqueIdentifier, associatedUIElement);
+            INTERNAL_idsToUIElements.Add(uniqueIdentifier, new WeakReference<UIElement>(associatedUIElement));
 
             return new INTERNAL_HtmlDomElementReference(uniqueIdentifier, parent); //todo: when parent is null this breaks for the root control, but the whole logic will be replaced with simple "ExecuteJavaScript" calls in the future, so it will not be a problem.
         }
@@ -957,7 +957,7 @@ var parentElement = document.getElementByIdSafe(""{parentUniqueIdentifier}"");
     parentElement.children[{insertionIndex}].insertAdjacentElement(""{relativePosition}"", newElement);";
 
             ExecuteJavaScript(javaScriptToExecute);
-            INTERNAL_idsToUIElements.Add(uniqueIdentifier, associatedUIElement);
+            INTERNAL_idsToUIElements.Add(uniqueIdentifier, new WeakReference<UIElement>(associatedUIElement));
             return new INTERNAL_HtmlDomElementReference(uniqueIdentifier, (INTERNAL_HtmlDomElementReference)parentRef);
         }
 
@@ -991,7 +991,7 @@ var parentElement = document.getElementByIdSafe(""{parentUniqueIdentifier}"");
 parentElement.appendChild(newElement);";
 
                 ExecuteJavaScript(javaScriptToExecute);
-                INTERNAL_idsToUIElements.Add(uniqueIdentifier, associatedUIElement);
+                INTERNAL_idsToUIElements.Add(uniqueIdentifier, new WeakReference<UIElement>(associatedUIElement));
                 return new INTERNAL_HtmlDomElementReference(uniqueIdentifier, ((INTERNAL_HtmlDomElementReference)parentRef).Parent);
                 //todo-perfs: check if there is a better solution in terms of performance (while still remaining compatible with all browsers).
 #if !CSHTML5NETSTANDARD
@@ -1238,7 +1238,10 @@ parentElement.appendChild(child);";
                         string id = Convert.ToString(jsId);
                         if (INTERNAL_HtmlDomManager.INTERNAL_idsToUIElements.ContainsKey(id))
                         {
-                            result = INTERNAL_HtmlDomManager.INTERNAL_idsToUIElements[id];
+                            if (INTERNAL_HtmlDomManager.INTERNAL_idsToUIElements[id].TryGetTarget(out var uie))
+                            {
+                                result = uie;
+                            }
                             break;
                         }
                     }
